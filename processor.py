@@ -66,7 +66,7 @@ def extract_talent_data(user_description: str) -> Dict[str, Any]:
 
     try:
         response = client.chat.completions.create(
-            model="llama-3.1-70b-versatile",
+            model="llama-3.3-70b-versatile",
             messages=[
                 {"role": "system", "content": "You are a professional talent mapper. Return results in JSON format only."},
                 {"role": "user", "content": prompt}
