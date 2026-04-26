@@ -1,3 +1,8 @@
 streamlit
-google-genai
+langdetect
+spacy
+transformers
+torch
+uuid
 python-dotenv
+google-genai
