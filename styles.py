@@ -30,9 +30,13 @@ def get_custom_styles():
 
     /* Hero Styling */
     .hero-section {
-        text-align: center;
+        text-align: center !important;
         padding: 4rem 1rem;
         margin-bottom: 2rem;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
     }
 
     .main-title {
@@ -55,9 +59,13 @@ def get_custom_styles():
         font-size: 1.1rem;
         color: #CBD5E1;
         max-width: 600px;
-        margin: 0 auto 2rem auto;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        margin-top: 0;
+        margin-bottom: 2rem;
         line-height: 1.6;
-        text-align: center;
+        text-align: center !important;
+        display: block;
     }
 
     .hero-stats {
