@@ -57,6 +57,7 @@ def get_custom_styles():
         max-width: 600px;
         margin: 0 auto 2rem auto;
         line-height: 1.6;
+        text-align: center;
     }
 
     .hero-stats {
