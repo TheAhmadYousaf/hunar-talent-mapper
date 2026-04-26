@@ -5,4 +5,4 @@ transformers
 torch
 uuid
 python-dotenv
-google-genai
+groq
