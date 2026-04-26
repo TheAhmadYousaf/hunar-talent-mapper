@@ -1,6 +1,6 @@
 import json
 import os
-from google import genai
+from groq import Groq
 from dotenv import load_dotenv
 from typing import Dict, Any
 
@@ -8,25 +8,26 @@ from typing import Dict, Any
 load_dotenv()
 
 def get_client():
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         return None
     try:
-        return genai.Client(api_key=api_key)
+        return Groq(api_key=api_key)
     except Exception:
         return None
 
 
 def extract_talent_data(user_description: str) -> Dict[str, Any]:
     """
-    Parses informal text (English, Urdu, or Roman Urdu) to extract structured talent data using Gemini 2.0.
+    Parses informal text (English, Urdu, or Roman Urdu) to extract structured talent data using Groq (Llama 3).
     """
     client = get_client()
     if not client:
         return {
-            "error": "Gemini API Key not found or initialization failed. Please set the GEMINI_API_KEY in .env file.",
+            "error": "Groq API Key not found. Please set the GROQ_API_KEY in Streamlit secrets or .env file.",
             "Primary_Skills": [],
             "Secondary_Skills": [],
+            "Soft_Skills": [],
             "Confidence_Score": 0.0,
             "Suggested_Job_Titles": [],
             "Bridge_Skills": []
@@ -64,16 +65,16 @@ def extract_talent_data(user_description: str) -> Dict[str, Any]:
     """
 
     try:
-        # Using gemini-flash-latest based on the list of available models
-        response = client.models.generate_content(
-            model='gemini-flash-latest',
-            contents=prompt,
-            config={
-                'response_mime_type': 'application/json',
-            }
+        response = client.chat.completions.create(
+            model="llama-3.1-70b-versatile",
+            messages=[
+                {"role": "system", "content": "You are a professional talent mapper. Return results in JSON format only."},
+                {"role": "user", "content": prompt}
+            ],
+            response_format={"type": "json_object"}
         )
         
-        extracted_data = json.loads(response.text)
+        extracted_data = json.loads(response.choices[0].message.content)
         return extracted_data
     except Exception as e:
         return {
