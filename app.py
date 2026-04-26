@@ -101,11 +101,16 @@ def detect_language_badge(text):
     if not text.strip():
         return None
     try:
-        # Simple heuristic for Roman Urdu vs English
-        # Roman Urdu often uses 'hai', 'karta', 'hoon', 'hai', 'ka', 'ke'
-        roman_urdu_keywords = ['hai', 'hain', 'hoon', 'karta', 'karte', 'karti', 'ka', 'ke', 'ki', 'ko', 'mein', 'par', 'tha', 'thi', 'the', 'raha', 'rahe', 'rahi']
+        # Roman Urdu Detection - Expanded Keyword List
+        roman_urdu_keywords = [
+            'karna', 'karta', 'sakta', 'hu', 'hai', 'mein', 'aur', 'nahi', 'bana', 
+            'wala', 'kiya', 'tha', 'thi', 'hoon', 'karke', 'chahiye', 'milta', 
+            'deta', 'leta', 'hain', 'ka', 'ke', 'ki', 'ko', 'par', 'raha', 'rahe', 'rahi'
+        ]
         text_lower = text.lower()
-        words = text_lower.split()
+        # Use regex or simple search for whole words to avoid partial matches like 'th' in 'the'
+        import re
+        roman_score = sum(1 for word in roman_urdu_keywords if re.search(r'\b' + word + r'\b', text_lower))
         
         has_urdu_chars = any('\u0600' <= c <= '\u06FF' for c in text)
         
@@ -116,8 +121,6 @@ def detect_language_badge(text):
                 return "🔀 Mixed Language", "lang-mixed"
             return "🇵🇰 Urdu", "lang-urdu"
         
-        # Roman Urdu Detection
-        roman_score = sum(1 for word in words if word in roman_urdu_keywords)
         if roman_score >= 1:
             return "💬 Roman Urdu", "lang-roman"
             
@@ -134,15 +137,33 @@ def detect_language_badge(text):
 def calculate_match_score(user_skills, opp_skills):
     if not user_skills or not opp_skills:
         return 0
-    matched = 0
-    user_skills_lower = [s.lower() for s in user_skills]
+    
+    # Flatten user skills into a set of lowercase words for fuzzy matching
+    user_words = set()
+    for s in user_skills:
+        w = s.lower().replace("/", " ").replace("-", " ").replace(",", " ").split()
+        user_words.update(w)
+    
+    matched_count = 0
     for os in opp_skills:
-        for us in user_skills_lower:
-            if os in us or us in os:
-                matched += 1
-                break
-    score = (matched / len(opp_skills)) * 100
-    return min(100, int(score * 2.5)) # Boosting score for better UX, usually opp_skills lists many
+        opp_skill_lower = os.lower()
+        opp_words = set(opp_skill_lower.replace("/", " ").replace("-", " ").replace(",", " ").split())
+        
+        # Match if any word overlaps OR if one is a substring of the other
+        word_overlap = any(word in user_words for word in opp_words if len(word) > 2)
+        substring_match = any(opp_skill_lower in us.lower() or us.lower() in opp_skill_lower for us in user_skills)
+        
+        if word_overlap or substring_match:
+            matched_count += 1
+            
+    if matched_count == 0:
+        return 0
+        
+    # Calculate base score
+    score = (matched_count / len(opp_skills)) * 100
+    # Boost the score so relevant ones easily hit >30%
+    boosted_score = int(score * 2.5) + 20 
+    return min(100, boosted_score)
 
 def get_match_class(score):
     if score > 80: return "match-high"
@@ -251,39 +272,41 @@ with st.container():
                     uid = str(uuid.uuid4())
                     st.session_state.profiles[uid] = data
                     
-                    # Talent Card
-                    st.markdown('<div class="talent-card">', unsafe_allow_html=True)
+                    # Build the entire Talent Card as a single HTML string to avoid empty card bugs
+                    card_html = f'<div class="talent-card">'
                     
                     if data.get("Confidence_Score", 0) > 0.8:
-                        st.markdown(f'<span class="lang-badge lang-urdu" style="background:#0891B2; color:white;">✦ {t["verified"]}</span>', unsafe_allow_html=True)
+                        card_html += f'<span class="lang-badge lang-urdu" style="background:#0891B2; color:white;">✦ {t["verified"]}</span>'
                     
-                    st.markdown(f'<h2 class="section-header {is_rtl}">{t["primary"]}</h2>', unsafe_allow_html=True)
+                    card_html += f'<h2 class="section-header {is_rtl}">{t["primary"]}</h2>'
                     for skill in data.get("Primary_Skills", []):
-                        st.markdown(f'<span class="skill-tag-primary">{skill}</span>', unsafe_allow_html=True)
+                        card_html += f'<span class="skill-tag-primary">{skill}</span>'
                     
-                    st.markdown(f'<h2 class="section-header {is_rtl}">{t["secondary"]}</h2>', unsafe_allow_html=True)
+                    card_html += f'<h2 class="section-header {is_rtl}">{t["secondary"]}</h2>'
                     for skill in data.get("Secondary_Skills", []):
-                        st.markdown(f'<span class="skill-tag-additional">{skill}</span>', unsafe_allow_html=True)
+                        card_html += f'<span class="skill-tag-additional">{skill}</span>'
                         
-                    st.markdown(f'<h2 class="section-header {is_rtl}">{t["soft_skills"]}</h2>', unsafe_allow_html=True)
+                    card_html += f'<h2 class="section-header {is_rtl}">{t["soft_skills"]}</h2>'
                     for skill in data.get("Soft_Skills", []):
-                        st.markdown(f'<span class="skill-tag-soft">{skill}</span>', unsafe_allow_html=True)
+                        card_html += f'<span class="skill-tag-soft">{skill}</span>'
                     
-                    st.markdown(f'<hr>', unsafe_allow_html=True)
-                    st.markdown(f'<h2 class="section-header {is_rtl}">{t["jobs"]}</h2>', unsafe_allow_html=True)
-                    st.write(", ".join(data.get("Suggested_Job_Titles", [])))
+                    card_html += '<hr>'
+                    card_html += f'<h2 class="section-header {is_rtl}">{t["jobs"]}</h2>'
+                    card_html += f'<p class="{is_rtl}">' + ", ".join(data.get("Suggested_Job_Titles", [])) + '</p>'
                     
                     # Bridge Skills Section
-                    st.markdown(f'''
+                    bridge_items = "".join([f"<li>{s}</li>" for s in data.get("Bridge_Skills", [])])
+                    card_html += f'''
                     <div style="background: #F0FDFA; border-left: 4px solid #0891B2; padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
                         <h4 class="{is_rtl}" style="margin-top:0; color:#0891B2;">🚀 {t["bridge"]}</h4>
                         <ul class="{is_rtl}">
-                            {" ".join([f"<li>{s}</li>" for s in data.get("Bridge_Skills", [])])}
+                            {bridge_items}
                         </ul>
                     </div>
-                    ''', unsafe_allow_html=True)
+                    '''
+                    card_html += '</div>'
                     
-                    st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown(card_html, unsafe_allow_html=True)
                     
                     # Share Section
                     st.markdown(f'<h3 class="section-header" style="color:white; border-color:white;">🔗 {t["share_title"]}</h3>', unsafe_allow_html=True)
