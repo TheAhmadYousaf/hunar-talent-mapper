@@ -39,11 +39,12 @@ def extract_talent_data(user_description: str) -> Dict[str, Any]:
     User Description: "{user_description}"
     
     Extract the following information into a valid JSON object:
-    1. "Primary_Skills": List of 2-3 most strong skills.
-    2. "Secondary_Skills": List of additional skills or tools mentioned.
-    3. "Confidence_Score": A float between 0 and 1 representing how clearly the skills are defined.
-    4. "Suggested_Job_Titles": List of 3 formal job titles this person could apply for.
-    5. "Bridge_Skills": A list of 1 or 2 specific skills or certifications they should learn to double their earning potential.
+    1. "Primary_Skills": List of 2-3 most strong technical/hard skills.
+    2. "Secondary_Skills": List of additional technical skills or tools mentioned.
+    3. "Soft_Skills": List of 2-3 behavioral or interpersonal skills (e.g. Communication, Problem Solving, Urdu/English proficiency).
+    4. "Confidence_Score": A float between 0 and 1 representing how clearly the skills are defined.
+    5. "Suggested_Job_Titles": List of 3 formal job titles this person could apply for.
+    6. "Bridge_Skills": A list of 1 or 2 specific skills or certifications they should learn to double their earning potential.
 
     Requirements:
     - Respond ONLY with the JSON object.
@@ -54,7 +55,8 @@ def extract_talent_data(user_description: str) -> Dict[str, Any]:
     Example Output:
     {{
         "Primary_Skills": ["Mobile Hardware Diagnostics", "Basic Software Troubleshooting"],
-        "Secondary_Skills": ["Introductory Programming (Python)", "Customer Service"],
+        "Secondary_Skills": ["Introductory Programming (Python)", "Soldering"],
+        "Soft_Skills": ["Customer Service", "Technical Communication", "Analytical Thinking"],
         "Confidence_Score": 0.85,
         "Suggested_Job_Titles": ["Junior Smartphone Technician", "Technical Support Representative", "Electronics Repair Apprentice"],
         "Bridge_Skills": ["Advanced Chip-Level Repairing", "Full-stack Web Development basics"]
@@ -78,6 +80,7 @@ def extract_talent_data(user_description: str) -> Dict[str, Any]:
             "error": str(e),
             "Primary_Skills": [],
             "Secondary_Skills": [],
+            "Soft_Skills": [],
             "Confidence_Score": 0.0,
             "Suggested_Job_Titles": ["No match found"],
             "Bridge_Skills": ["Unable to determine"]
