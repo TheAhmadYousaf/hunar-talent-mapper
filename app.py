@@ -159,11 +159,9 @@ def calculate_match_score(user_skills, opp_skills):
     if matched_count == 0:
         return 0
         
-    # Calculate base score
+    # Calculate base score (matches / total_required) * 100
     score = (matched_count / len(opp_skills)) * 100
-    # Boost the score so relevant ones easily hit >30%
-    boosted_score = int(score * 2.5) + 20 
-    return min(100, boosted_score)
+    return int(round(score))
 
 def get_match_class(score):
     if score > 80: return "match-high"
@@ -342,13 +340,14 @@ with st.container():
                     
                     for opp in scored_opps:
                         m_class = get_match_class(opp["score"])
+                        score_display = f"{opp['score']}%" if opp['score'] > 0 else "—"
                         st.markdown(f'''
                         <div class="opp-card">
-                            <span class="match-badge {m_class}">{t["match_score"]}: {opp["score"]}%</span>
+                            <span class="match-badge {m_class}">{t["match_score"]}: {score_display}</span>
                             <h4 style="margin:0; color:#0F172A;">{opp["emoji"]} {opp["name"]}</h4>
                             <p style="margin:5px 0; color:#475569; font-weight:600;">{opp["title"]}</p>
                             <div style="margin-top:10px;">
-                                {" ".join([f'<span style="font-size:0.7rem; background:#E2E8F0; padding:2px 6px; border-radius:4px; margin-right:4px;">{s}</span>' for s in opp["skills"][:3]])}
+                                {" ".join([f'<span style="background:#E0F2FE; color:#0369A1; border-radius:12px; padding:3px 10px; font-size:12px; font-weight:500; display:inline-block; margin:2px;">{s}</span>' for s in opp["skills"][:3]])}
                             </div>
                             <div style="margin-top:15px; text-align:right;">
                                 <a href="{opp["url"]}" target="_blank" style="color:#0891B2; text-decoration:none; font-weight:700;">Explore →</a>
